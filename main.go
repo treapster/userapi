@@ -41,6 +41,28 @@ var (
 	UserNotFound = errors.New("user_not_found")
 )
 
+func createUserRouter(us UserService) func(r chi.Router) {
+	return func(r chi.Router) {
+		r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+			findAllUsers(w, r, us)
+		})
+		r.Post("/", func(w http.ResponseWriter, r *http.Request) {
+			createUser(w, r, us)
+		})
+
+		r.Route("/{id}", func(r chi.Router) {
+			r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+				getUser(w, r, us)
+			})
+			r.Patch("/", func(w http.ResponseWriter, r *http.Request) {
+				updateUser(w, r, us)
+			})
+			r.Delete("/", func(w http.ResponseWriter, r *http.Request) {
+				deleteUser(w, r, us)
+			})
+		})
+	}
+}
 func initRouter(userRouter func(r chi.Router)) *chi.Mux {
 	r := chi.NewRouter()
 
@@ -62,7 +84,7 @@ func initRouter(userRouter func(r chi.Router)) *chi.Mux {
 }
 func main() {
 	us := NewDefaultUserService(store)
-	r := initRouter(us.NewRouter())
+	r := initRouter(createUserRouter(us))
 	err := http.ListenAndServe(":3333", r)
 	if err != nil {
 		fmt.Printf(err.Error())

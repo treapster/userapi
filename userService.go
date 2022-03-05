@@ -4,11 +4,8 @@ import (
 	"encoding/json"
 	"io/fs"
 	"io/ioutil"
-	"net/http"
 	"strconv"
 	"time"
-
-	"github.com/go-chi/chi/v5"
 )
 
 type (
@@ -20,7 +17,6 @@ type (
 		Filename string
 	}
 	UserService interface {
-		NewRouter() func(r chi.Router)
 		CreateUser(req CreateUserRequest) string
 		FindAllUsers() UserList
 		GetUser(id string) (User, error)
@@ -42,28 +38,7 @@ func (us *DefaultUserService) setStore(s UserStore) {
 func NewDefaultUserService(name string) *DefaultUserService {
 	return &DefaultUserService{Filename: name}
 }
-func (us *DefaultUserService) NewRouter() func(r chi.Router) {
-	return func(r chi.Router) {
-		r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-			findAllUsers(w, r, us)
-		})
-		r.Post("/", func(w http.ResponseWriter, r *http.Request) {
-			createUser(w, r, us)
-		})
 
-		r.Route("/{id}", func(r chi.Router) {
-			r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-				getUser(w, r, us)
-			})
-			r.Patch("/", func(w http.ResponseWriter, r *http.Request) {
-				updateUser(w, r, us)
-			})
-			r.Delete("/", func(w http.ResponseWriter, r *http.Request) {
-				deleteUser(w, r, us)
-			})
-		})
-	}
-}
 func (us *DefaultUserService) FindAllUsers() UserList {
 	s := us.getStore()
 	return s.List
